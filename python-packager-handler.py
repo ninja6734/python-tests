@@ -4,9 +4,13 @@ from PIL import Image
 import requests
 from scratchattach import Encoding
 import os
+import random
+import time
 sessionID = os.environ.get("scratchSessionID")
 connection = sa.CloudConnection(project_id = 683289707, username="ninja_6734_", session_id=sessionID)
 CloudEvents = sa.CloudEvents(project_id = 683289707)
+
+MaxNumberLimit = 256
 
 def generatePfp(user):
     userVar = sa.get_user(user)
@@ -19,8 +23,21 @@ def generatePfp(user):
             pixelList.append(Img.getpixel((pixelX, pixelY)))
     return pixelList
 
+def splitToPackages(package):
+    if (len(package) <= MaxNumberLimit - 7):
+        return [str(random.randint(1,9999999)) + str(package)]
+    else:
+        packages = []
+        for i in range(0,len(package),MaxNumberLimit - 7):
+            packages.append(str(random.randint(1,9999999))+str(package)[i:i+MaxNumberLimit-7])
+        return packages
+
 def sendPackage(package):
-    connection.set_var("testing", package)
+    packages = splitToPackages(package)
+    for i in packages:
+        connection.set_var("testing",i)
+        #be nice :)
+        time.sleep(0.5)
 
 
 @CloudEvents.event
