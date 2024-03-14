@@ -48,7 +48,8 @@ def splitToPackages(package):
         return packages
 
 def sendPackage(package):
-    time.sleep(0.4)
+    #idk scratch takes long
+    time.sleep(1)
     packages = splitToPackages(Encoding.encode(package))
     for i in packages:
         connection.set_var("testing",i)
