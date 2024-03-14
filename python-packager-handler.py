@@ -22,13 +22,14 @@ def rgb_to_hex(rgb):
     
     return hex_color
 
-def generatePfp(user):
+def generatePfp(user,resolution):
     userVar = sa.get_user(user)
     req = requests.get(userVar.icon_url).content
     req = BytesIO(req)
     Img = Image.open(req)
     Img = Img.convert("RGB")
-    Img.resize((15,15))
+    Img = Img.resize((resolution,resolution))
+    Img = Img.rotate(90)
     pixelList = []
     for pixelX in range(Img.width):
         for pixelY in range(Img.height):
@@ -47,14 +48,16 @@ def splitToPackages(package):
         return packages
 
 def sendPackage(package):
+    time.sleep(0.4)
     packages = splitToPackages(Encoding.encode(package))
     for i in packages:
         connection.set_var("testing",i)
         print("sent package: "+ Encoding.decode(i[8:]))
         #be nice :)
-        time.sleep(0.2)
+        time.sleep(0.4)
     connection.set_var("testing",str(random.randint(1,99999999)).zfill(8)+str(Encoding.encode("end")))
     print("sent package ending")
+    print(f"sent {len(packages)} packages")
 
 
 @CloudEvents.event
@@ -63,7 +66,7 @@ def on_set(event):
     action = out.split(";")
     if action[0] == "pfp":
         send = ""
-        for color in generatePfp(action[1]):
+        for color in generatePfp(action[1],int(action[2])):
             send += color
         sendPackage(send)
 

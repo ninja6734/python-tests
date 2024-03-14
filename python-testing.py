@@ -1,15 +1,32 @@
-import random
-from scratchattach import Encoding
-MaxNumberLimit = 256
+import requests
+import scratchattach as sa
+from io import BytesIO
+from PIL import Image
 
-def splitToPackages(package):
-    if (len(package) <= MaxNumberLimit - 7):
-        return [str(random.randint(1,9999999)).zfill(7) + str(package)]
-    else:
-        packages = []
-        for i in range(0,len(package),MaxNumberLimit - 7):
-            packages.append(str(random.randint(1,9999999)).zfill(7)+str(package)[i:i+MaxNumberLimit-7])
-        return packages
+def rgb_to_hex(rgb):
+    r, g, b = rgb
+    r = max(0, min(r, 255))
+    g = max(0, min(g, 255))
+    b = max(0, min(b, 255))
+    
+    hex_color = "{:02X}{:02X}{:02X}".format(r, g, b)
+    
+    return hex_color
 
-test = "bananas are really amazing and wonderful and observationary and I like them really much and I'm running out of ideas what to write here"
-print(splitToPackages(Encoding.encode(test)))
+def generatePfp(user,resolution):
+    userVar = sa.get_user(user)
+    req = requests.get(userVar.icon_url).content
+    req = BytesIO(req)
+    Img = Image.open(req)
+    Img = Img.convert("RGB")
+    Img = Img.resize((resolution,resolution))
+    Img.save("pfp.png")
+    pixelList = []
+    for pixelX in range(Img.width):
+        for pixelY in range(Img.height):
+            pixel = Img.getpixel((pixelX, pixelY))
+            pixel = rgb_to_hex(pixel)
+            pixelList.append(pixel)
+    return pixelList
+
+generatePfp("griffpatch",90)
