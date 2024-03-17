@@ -9,7 +9,9 @@ def get_index(lst, item):
     index = [idx for idx,x in enumerate(lst) if x == item][0]
     return index
 
-file = open("Voc.txt","r")
+prefix = "vocab-program\\"
+
+file = open(prefix + "Voc.txt","r")
 AllLists = []
 
 for element in file.readlines():
@@ -71,7 +73,7 @@ elif (action in AllLists):
             except:
                 pick = 1
             current_mode = pick
-            List = open(action + ".txt","r").readline().split("§")
+            List = open(prefix + action + ".txt","r").readline().split("§")
             prev_ol = ast.literal_eval(List[0])
             wrong_ol = []
             temp_yl = []
@@ -80,7 +82,7 @@ elif (action in AllLists):
             yl = []
 
             vocabs = len(prev_ol)
-            print(str(vocabs) + "out of" + str(len(prev_yl)))
+            print(str(vocabs) + " out of " + str(len(prev_yl)))
 
             numberList = list(range(1,vocabs + 1))
             random.shuffle(numberList)
