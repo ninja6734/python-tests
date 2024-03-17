@@ -11,6 +11,7 @@ connection = sa.CloudConnection(project_id = 683289707, username="ninja_6734_", 
 CloudEvents = sa.CloudEvents(project_id = 683289707)
 
 MaxNumberLimit = 256
+packages = []
 
 def rgb_to_hex(rgb):
     r, g, b = rgb
@@ -48,8 +49,6 @@ def splitToPackages(package):
         return packages
 
 def sendPackage(package):
-    #idk scratch takes long
-    time.sleep(1)
     packages = splitToPackages(Encoding.encode(package))
     for i in packages:
         connection.set_var("testing",i)
@@ -60,6 +59,16 @@ def sendPackage(package):
     print("sent package ending")
     print(f"sent {len(packages)} packages")
 
+def resendPackages(action):
+    time.sleep(0.7)
+    print("resending packages...")
+    for i in action:
+        connection.set_var("testing",packages[int(i)])
+        print("resent package: " + Encoding.decode(packages[int(i)][8:]))
+        time.sleep(0.4)
+    
+    connection.set_var("testing",str(random.randint(1,99999999)).zfill(8)+str(Encoding.encode("end")))
+    print(f"sent {len(action)} packages")
 
 @CloudEvents.event
 def on_set(event):
@@ -70,6 +79,10 @@ def on_set(event):
         for color in generatePfp(action[1],int(action[2])):
             send += color
         sendPackage(send)
+    if action[0] == "package":
+        action.pop(0)
+        action.pop(len(action)-1)
+        resendPackages(action)
 
 @CloudEvents.event
 def on_ready():
