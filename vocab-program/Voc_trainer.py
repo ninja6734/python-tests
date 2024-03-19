@@ -48,21 +48,21 @@ if (action == "\c"):
     for element in TempList:
         resultY.append(element.split("#"))
             
-    VocabList = open(name + ".txt","w")
+    VocabList = open(prefix + name + ".txt","w")
     VocabList.write(str(resultX)+"§"+str(resultY))
         
-    file = open("Voc.txt", "a")
+    file = open(prefix + "Voc.txt", "a")
     file.write("\n" + name)
 elif (action in AllLists):
     if (input("Do you want to delete(del) or open this List?: ") == "del"):
-        os.remove(action + ".txt")
-        AllLists = open("Voc.txt", "r").readlines()
+        os.remove(prefix + action + ".txt")
+        AllLists = open(prefix + "Voc.txt", "r").readlines()
         NewLists = []
         for element in AllLists:
             if(element != action):
                 NewLists.append(element)
             
-        file = open("Voc.txt", "w")
+        file = open(prefix + "Voc.txt", "w")
         for element in NewLists:
             file.write(element)
             
