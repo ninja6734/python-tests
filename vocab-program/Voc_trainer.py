@@ -9,7 +9,7 @@ def get_index(lst, item):
     index = [idx for idx,x in enumerate(lst) if x == item][0]
     return index
 
-prefix = "vocab-program\\"
+prefix = input("enter path to directory")
 
 file = open(prefix + "Voc.txt","r")
 AllLists = []
