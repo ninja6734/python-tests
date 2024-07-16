@@ -131,8 +131,13 @@ class DameBot:
         with open("Output.csv","w") as file:
             writer = csv.writer(file)
 
-            for cnt,row in enumerate(Bots.HiddenLayers[-1]):
+            for cnt,row in enumerate(self.HiddenLayers[-1]):
                 writer.writerow([cnt + 1, row])
+
+    def getReaction(self,Data):
+        self.RecieveInput(Data)
+        self.CalculateLayers()
+        return self.HiddenLayers[-1].index(max(self.HiddenLayers[-1]))
 
 
 def SetupGame():
@@ -175,6 +180,7 @@ root.geometry("380x380")
 canvas = tkinter.Canvas(root, width=380, height= 380)
 canvas.pack()
 
-
+Bot = DameBot("t1", 3, [12,10,10],True)
+print(Bot.getReaction([x for xs in Dame for x in xs]))
 
 root.mainloop()
