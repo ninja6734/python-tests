@@ -1,6 +1,7 @@
 from random import *
 import csv
 from math import *
+import tkinter
 
 class DameBot:
     type = ""
@@ -133,15 +134,47 @@ class DameBot:
             for cnt,row in enumerate(Bots.HiddenLayers[-1]):
                 writer.writerow([cnt + 1, row])
 
-    
-Bots = DameBot("c1",3, [12,10,10],True)
 
-Bots.RandomizeChange(2)
+def SetupGame():
+    Array = [[0] * 8] * 8
+    for rowCnt,_ in enumerate(Array):
+        if(rowCnt < 3):
+            if (rowCnt == 1):
+                Array[rowCnt] = [0,1,0,1,0,1,0,1]
+            else:
+                Array[rowCnt] = [1,0,1,0,1,0,1,0]
+        elif(rowCnt > 4):
+            if(rowCnt == 6):
+                Array[rowCnt] = [0,-1,0,-1,0,-1,0,-1]
+            else:
+                Array[rowCnt] = [-1,0,-1,0,-1,0,-1,0]
 
-Bots.RecieveInput([1] * 64)
-Bots.CalculateLayers()
-Bots.printOutput()
+    return Array
 
-selectedOutput = Bots.HiddenLayers[-1].index(max(Bots.HiddenLayers[-1]))
+def showField():
+    for colNum,col in enumerate(Dame):
+        for rowNum,row in enumerate(col):
+            if(colNum % 2 == 0):
+                if(rowNum % 2 != 0):
+                    canvas.create_rectangle(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="green")
+            else:
+                if(rowNum % 2 == 0):
+                    canvas.create_rectangle(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="green")
+            if(row == 1):
+                canvas.create_oval(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="blue")
+            elif(row == -1):
+                canvas.create_oval(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="violet")
 
-print(selectedOutput)
+Dame = SetupGame()
+print(Dame)
+
+root = tkinter.Tk()
+root.title("Checkers")
+root.geometry("380x380")
+
+canvas = tkinter.Canvas(root, width=380, height= 380)
+canvas.pack()
+
+
+
+root.mainloop()
