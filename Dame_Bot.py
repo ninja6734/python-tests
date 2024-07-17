@@ -12,6 +12,7 @@ class DameBot:
     randMinVal = 0
     randMaxVal = 0
     _input = 0
+    pID = 0
 
     #initialisation
     def __init__(self, type, HiddenLayerSize, Nodes, firstInit = False) -> None:
@@ -22,11 +23,11 @@ class DameBot:
         
         #Initialize HiddenLayer
         for i in range(HiddenLayerSize):
-            self.HiddenLayers.append([0] * Nodes[i])
-        self.HiddenLayers.append([0] * 4096)
+            self.HiddenLayers.append([0 for _ in range(Nodes[i])])
+        self.HiddenLayers.append([0 for _ in range(4096)])
 
         #initialize InputLayer
-        self.InputLayer = [0] * 64
+        self.InputLayer = [0 for _ in range(64)]
 
         self.createWeightsBiases(HiddenLayerSize, Nodes)
 
@@ -35,6 +36,9 @@ class DameBot:
             self.RandomizeInit()
         else:
             self.randomizeValue()
+
+    def setID(self, id):
+        self.pID = id
 
     
     #output
@@ -49,13 +53,13 @@ class DameBot:
                 for _ in range(Nodes[HiddenLayerNum]):
                     TempBiases.append(0)
                     if(HiddenLayerNum == 0):
-                        TempWeights.append([0] * len(self.InputLayer))
+                        TempWeights.append([0 for _ in range(len(self.InputLayer))])
                     else:
-                        TempWeights.append([0] * Nodes[HiddenLayerNum - 1])
+                        TempWeights.append([0 for _ in range(Nodes[HiddenLayerNum - 1])])
             else:
                 for _ in range(4096):
                     TempBiases.append(0)
-                    TempWeights.append([0] * Nodes[-1])
+                    TempWeights.append([0 for _ in range( Nodes[-1])])
             self.Weights.append(TempWeights)
             self.Biases.append(TempBiases)
 
@@ -135,43 +139,143 @@ class DameBot:
                 writer.writerow([cnt + 1, row])
 
     def getReaction(self,Data):
-        self.RecieveInput(Data)
+        self.RecieveInput([x for xs in Data for x in xs])
         self.CalculateLayers()
         return self.HiddenLayers[-1].index(max(self.HiddenLayers[-1]))
 
 
-def SetupGame():
-    Array = [[0] * 8] * 8
-    for rowCnt,_ in enumerate(Array):
-        if(rowCnt < 3):
-            if (rowCnt == 1):
-                Array[rowCnt] = [0,1,0,1,0,1,0,1]
-            else:
-                Array[rowCnt] = [1,0,1,0,1,0,1,0]
-        elif(rowCnt > 4):
-            if(rowCnt == 6):
-                Array[rowCnt] = [0,-1,0,-1,0,-1,0,-1]
-            else:
-                Array[rowCnt] = [-1,0,-1,0,-1,0,-1,0]
 
-    return Array
 
-def showField():
-    for colNum,col in enumerate(Dame):
-        for rowNum,row in enumerate(col):
-            if(colNum % 2 == 0):
-                if(rowNum % 2 != 0):
-                    canvas.create_rectangle(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="green")
+
+class DameGame:
+    Board = []
+    Type = ""
+    def __init__(self, type):
+        self.Board = self.SetupGame()
+        self.Type = type
+
+    
+    def SetupGame(self):
+        Array = [[0 for _ in range(8)] for _ in range(8)]
+        for rowCnt,_ in enumerate(Array):
+            if(rowCnt < 3):
+                if (rowCnt == 1):
+                    Array[rowCnt] = [0,1,0,1,0,1,0,1]
+                else:
+                    Array[rowCnt] = [1,0,1,0,1,0,1,0]
+            elif(rowCnt > 4):
+                if(rowCnt == 6):
+                    Array[rowCnt] = [0,-1,0,-1,0,-1,0,-1]
+                else:
+                    Array[rowCnt] = [-1,0,-1,0,-1,0,-1,0]
+
+        return Array
+    
+    
+    def showField(self):
+        canvas.delete("all")
+        for colNum,col in enumerate(self.Board):
+            for rowNum,row in enumerate(col):
+                if(colNum % 2 == 0):
+                    if(rowNum % 2 != 0):
+                        canvas.create_rectangle(30+rowNum * 40,350 - colNum * 40,70 + rowNum * 40,310 - colNum * 40,fill="green")
+                else:
+                    if(rowNum % 2 == 0):
+                        canvas.create_rectangle(30+rowNum * 40,350 - colNum * 40,70 + rowNum * 40,310 - colNum * 40,fill="green")
+                if(row == 1):
+                    canvas.create_oval(30+rowNum * 40,350 - colNum * 40,70 + rowNum * 40,310 - colNum * 40,fill="blue")
+                elif(row == -1):
+                    canvas.create_oval(30+rowNum * 40,350 - colNum * 40,70 + rowNum * 40,310 - colNum * 40,fill="violet")
+
+    
+    def doMove(self,startX, startY, endX, endY, playerID):
+        if(self.Board[startY][startX] == 0):
+            return 5
+        else:
+            allowed = self.checkStart(startX, startY,playerID)
+            if(allowed == 0):
+                pick = self.Board[startY][startX]
+                allowed = self.checkEnd(startX,startY,endX,endY,playerID)
+                if(allowed == 0):
+                    print(self.Board)
+                    self.Board[startY][startX] = 0
+                    print(self.Board)
+                    self.Board[endY][endX] = pick
+                    print(self.Board)
+                elif(allowed == 1):
+                    return 3
+                elif(allowed == 2):
+                    return 2
+                else:
+                    return 1
             else:
-                if(rowNum % 2 == 0):
-                    canvas.create_rectangle(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="green")
-            if(row == 1):
-                canvas.create_oval(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="blue")
-            elif(row == -1):
-                canvas.create_oval(350-rowNum * 40,350 - colNum * 40,310 - rowNum * 40,310 - colNum * 40,fill="violet")
+                return 4
+    
+    def checkStart(self,startX, startY, playerID):
+        if(self.Board[startY][startX] == playerID):
+            return 0
+        else:
+            return 1
+        
+    def checkEnd(self,startX,startY,endX,endY,pID):
+        print(self.Board[endY][endX])
+        if(self.Board[endY][endX] == 0):
+            if((endX - startX + endY - startY) % 2 == 0):
+                if(startX == endX and startY == endY):
+                    return 3
+                else:
+                    if(abs(endX - startX) < 2 and abs(endY - startY) < 2):
+                        return 0
+                    else:
+                        allowed = self.checkRoute(startX,startY,endX,endY,pID)
+                    if(allowed == 0):
+                        return 0
+                    else:
+                        return 2
+            else:
+                return 2
+        else:
+            return 1
+    
+    def checkRoute(self,startX,startY,endX,endY,pID,Ways=[]):
+        BoardCopy = self.Board
+        FoundWays = Ways
+        if(FoundWays != []):
+            curX = FoundWays[0][0]
+            curY = FoundWays[0][1]
+        else:
+            curX = startX
+            curY = startY
+        newWays = self.findWays(curX,curY,BoardCopy,pID)
+        if(newWays != None):
+            FoundWays.append(newWays)
+        if([endX,endY] in FoundWays):
+            return 0
+        else:
+            if(FoundWays == []):
+                return 2
+            else:
+                self.checkRoute(startX,startY,endX,endY,pID,FoundWays)
+    
+    def findWays(self,posX,posY,boardCopy,pID):
+        ways = []
+        for off in [[1,1],[1,-1],[-1,-1],[-1,1]]:
+            try:
+                if(boardCopy[posY  + off[0]][posX + off[1]] == -(pID)):
+                    ways.append([posX + off[0] * 2, posY + off[1] * 2])
+            except:
+                print("out of bounds")
+        if(ways !=  []):
+            return ways
+        else:
+            return None
 
-Dame = SetupGame()
-print(Dame)
+
+
+Game = DameGame("Game1")
+print(Game.Board)
+print(Game.doMove(0,2,1,3,1))
+print(Game.Board)
 
 root = tkinter.Tk()
 root.title("Checkers")
@@ -180,7 +284,6 @@ root.geometry("380x380")
 canvas = tkinter.Canvas(root, width=380, height= 380)
 canvas.pack()
 
-Bot = DameBot("t1", 3, [12,10,10],True)
-print(Bot.getReaction([x for xs in Dame for x in xs]))
+Game.showField()
 
 root.mainloop()
