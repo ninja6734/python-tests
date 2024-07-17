@@ -142,10 +142,17 @@ class DameBot:
         self.RecieveInput([x for xs in Data for x in xs])
         self.CalculateLayers()
         return self.HiddenLayers[-1].index(max(self.HiddenLayers[-1]))
-
-
-
-
+    
+    def moveOnBoard(self,currentGame):
+        reaction = self.getReaction(currentGame.Board)
+        start = reaction % 64
+        end = int((reaction - start) / 64)
+        sx = start % 8
+        sy = int((start - sx) / 8)
+        ex = end % 8
+        ey = int((end - ex) / 8)
+        res = currentGame.doMove(sx,sy,ex,ey,self.pID)
+        print(f"{self.type}: {res}")
 
 class DameGame:
     Board = []
@@ -273,9 +280,11 @@ class DameGame:
 
 
 Game = DameGame("Game1")
-print(Game.Board)
-print(Game.doMove(0,2,1,3,1))
-print(Game.Board)
+Bot = DameBot("Bot1",3,[12,10,10],True)
+
+Bot.setID(1)
+
+Bot.moveOnBoard(Game)
 
 root = tkinter.Tk()
 root.title("Checkers")
@@ -283,7 +292,5 @@ root.geometry("380x380")
 
 canvas = tkinter.Canvas(root, width=380, height= 380)
 canvas.pack()
-
-Game.showField()
 
 root.mainloop()
