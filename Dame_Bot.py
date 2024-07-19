@@ -13,9 +13,19 @@ class DameBot:
     randMaxVal = 0
     _input = 0
     pID = 0
+    cost = 0
 
     #initialisation
-    def __init__(self, type, HiddenLayerSize, Nodes, firstInit = False) -> None:
+    def __init__(self, type, HiddenLayerSize = 3, Nodes = [12,10,10], firstInit = False) -> None:
+        self.cost = 0
+
+        if(firstInit):
+            self.Biases = []
+            self.HiddenLayers = []
+            self.Weights = []
+            self.InputLayer = []
+            self.pID = 0
+
         #throw error if input is wrong
         if(len(Nodes) != HiddenLayerSize):
             raise IndexError("Nodes must be the same length as the HiddenLayerSize minus the Ouput Layer (1)")
@@ -116,17 +126,22 @@ class DameBot:
                     Value = self.Biases[cnt][curNode]
                     for node,_ in enumerate(self.HiddenLayers[cnt-1]):
                         Value += node * self.Weights[cnt][curNode][node]
-                    self.HiddenLayers[cnt][curNode] = self.getSigmoid(Value)
+                    self.HiddenLayers[cnt][curNode] = self.getActivation(Value)
     
-    def getSigmoid(self,inputVal):
-        return 1/1+exp(-inputVal)
+    def getActivation(self,inputVal):
+        if(inputVal > 1):
+            return 1
+        elif(inputVal < 0):
+            return 0
+        else:
+            return inputVal
 
     def printWeights(self):
         with open("weights.csv","w") as file:
             writer = csv.writer(file)
 
             for cnt,row in enumerate(self.Weights):
-                tempArray = [cnt + 1]
+                tempArray = [f"layer: {cnt + 1}"]
                 for x in row:
                     tempArray.append(x)
                 writer.writerow(tempArray)
@@ -136,7 +151,7 @@ class DameBot:
             writer = csv.writer(file)
 
             for cnt,row in enumerate(self.HiddenLayers[-1]):
-                writer.writerow([cnt + 1, row])
+                writer.writerow([f"layer: {cnt + 1}", row])
 
     def getReaction(self,Data):
         self.RecieveInput([x for xs in Data for x in xs])
@@ -152,7 +167,7 @@ class DameBot:
         ex = end % 8
         ey = int((end - ex) / 8)
         res = currentGame.doMove(sx,sy,ex,ey,self.pID)
-        print(f"{self.type}: {res}")
+        return res
 
 class DameGame:
     Board = []
@@ -204,11 +219,9 @@ class DameGame:
                 pick = self.Board[startY][startX]
                 allowed = self.checkEnd(startX,startY,endX,endY,playerID)
                 if(allowed == 0):
-                    print(self.Board)
                     self.Board[startY][startX] = 0
-                    print(self.Board)
                     self.Board[endY][endX] = pick
-                    print(self.Board)
+                    return 0
                 elif(allowed == 1):
                     return 3
                 elif(allowed == 2):
@@ -225,7 +238,6 @@ class DameGame:
             return 1
         
     def checkEnd(self,startX,startY,endX,endY,pID):
-        print(self.Board[endY][endX])
         if(self.Board[endY][endX] == 0):
             if((endX - startX + endY - startY) % 2 == 0):
                 if(startX == endX and startY == endY):
@@ -267,30 +279,76 @@ class DameGame:
     def findWays(self,posX,posY,boardCopy,pID):
         ways = []
         for off in [[1,1],[1,-1],[-1,-1],[-1,1]]:
-            try:
-                if(boardCopy[posY  + off[0]][posX + off[1]] == -(pID)):
-                    ways.append([posX + off[0] * 2, posY + off[1] * 2])
-            except:
-                print("out of bounds")
+            if(len(boardCopy)  > posY + off[0]):
+                if(len(boardCopy[posY + off[0]]) > posX + off[1]):
+                    if(boardCopy[posY  + off[0]][posX + off[1]] == -(pID)):
+                        ways.append([posX + off[0] * 2, posY + off[1] * 2])
         if(ways !=  []):
             return ways
         else:
             return None
 
+def checkWinner(currentGame):
+    ones = 0
+    neg_ones = 0
+    for row in currentGame.Board:
+        if(-1 in row):
+            ones += 1
+        elif(not 1 in row):
+            neg_ones += 1
+    
+    if(ones == 0):
+        return -1
+    elif(neg_ones == 0):
+        return 1
+    else:
+        return 0
+
+def simulateGame(type, roundInterv, Bot1, Bot2):
+    Game = DameGame(type)
+    print(f"round this game: {roundInterv}")
+
+    cnt = 0
+    winner = 0
+    while(cnt < roundInterv and winner == 0):
+        cost = Bot1.moveOnBoard(Game)
+        Bot1.cost += cost
+        cost = Bot2.moveOnBoard(Game)
+        Bot2.cost += cost
+        cnt += 1
+        winner = checkWinner(Game)
+
+    print(cnt)
+
+    if(winner == 0):
+        winner = (int(Bot1.cost < Bot2.cost) * 2 - 1) 
+
+    print(f"winner: {winner}")
+    if(winner == 1):
+        print(f"winner-cost: {Bot1.cost}")
+        print(f"loser-cost: {Bot2.cost}")
+    else:
+        print(f"winner-cost: {Bot2.cost}")
+        print(f"loser-cost: {Bot1.cost}")
+    
+    return [Bot1.cost, Bot2.cost, winner, cnt, Game.Board]
+
+def simulateGameLoop(roundInterv):
+    Bot1 = DameBot("Bot1",firstInit=True)
+    Bot1.setID(1)
+    Bot2 = DameBot("Bot2",firstInit=True)
+    Bot2.setID(-1)
+    rounds = 20
+
+    for GameCnt in range(roundInterv):
+        GameResult = simulateGame(f"Game {GameCnt+1}", rounds, Bot1, Bot2)
+        Bot1Cost = GameResult[0] + int(GameResult[2] == -1) * 200
+        Bot2Cost = GameResult[1] + int(GameResult[2] == 1) * 200
+        Bot1.RandomizeChange(cost=Bot1Cost)
+        Bot2.RandomizeChange(cost=Bot2Cost)
+        rounds = 200
 
 
-Game = DameGame("Game1")
-Bot = DameBot("Bot1",3,[12,10,10],True)
-
-Bot.setID(1)
-
-Bot.moveOnBoard(Game)
-
-root = tkinter.Tk()
-root.title("Checkers")
-root.geometry("380x380")
-
-canvas = tkinter.Canvas(root, width=380, height= 380)
-canvas.pack()
-
-root.mainloop()
+    
+  
+simulateGameLoop(100)
